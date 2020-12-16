@@ -94,16 +94,16 @@ class CGD(nn.Module):
 
         self.RankingLayers = nn.ModuleList([RankingModule(k) for _ in range(self.n)])
         self.AuxLayer = AuxModule(M)
-        self.resnetBackbone = MyResNet(Bottleneck, [3, 4, 6, 3])
+        self.ResnetBackbone = MyResNet(Bottleneck, [3, 4, 6, 3])
 
     def forward(self, x):
         concatList = []
-        x = self.resnetBackbone(x)
+        x = self.ResnetBackbone(x)
         for i in range(self.n):
             concatList.append(self.RankingLayers[i](GD(x, self.p_k)))
 
-        return torch.cat(concatList)
-
+        z = torch.cat(concatList)
+        return torch.div(z, torch.linalg.norm(z))
 
     
 def testTensor(t):
@@ -113,9 +113,11 @@ def testTensor(t):
 
 if __name__ == "__main__":
     
-    model1 = CGD(1024, 10, 1024, 3)
+    model1 = CGD(1024, 768, 1024, 1)
     summary(model1, (3, 224, 224), device='cpu')
-    print(model1)
+
+
+    #print(model1)
 
 
 
