@@ -4,8 +4,8 @@ from torchvision.models.resnet import ResNet, Bottleneck
 from torchvision.models.utils import load_state_dict_from_url
 #from torchsummary import summary
 
-# in: [1, 3, 224, 224]
-# out: [1, 2048, 7, 7]
+# in: [batch, 3, 224, 224]
+# out: [batch, 2048, 7, 7]
 class MyResNet(ResNet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -29,13 +29,13 @@ class MyResNet(ResNet):
         return x
 
 
-# in: [1, 2048, 7, 7]
-# out: [2048]
+# in: [batch, 2048, 7, 7]
+# out: [batch, 2048]
 def GD(x, p_k):
-    x = torch.pow(x, exponent=p_k) # element-wise power [1, 2048, 7, 7]
-    x = torch.mean(x, dim=[2, 3]) # mean 7x7 [1, 2048]
-    x = torch.pow(x, exponent=1.0/p_k) # p_k root square [1, 2048]
-    return x[0]
+    x = torch.pow(x, exponent=p_k) # element-wise power [batch, 2048, 7, 7]
+    x = torch.mean(x, dim=[2, 3]) # mean 7x7 [batch, 2048]
+    x = torch.pow(x, exponent=1.0/p_k) # p_k root square [batch, 2048]
+    return x
 
 class GlobalDescriptor(nn.Module):
     def __init__(self, p_k):
@@ -43,13 +43,13 @@ class GlobalDescriptor(nn.Module):
         self.p_k = p_k
 
     def forward(self, x):
-        x = torch.pow(x, exponent=self.p_k) # element-wise power [1, 2048, 7, 7]
-        x = torch.mean(x, dim=[2, 3]) # mean 7x7 [1, 2048]
-        x = torch.pow(x, exponent=1.0/self.p_k) # p_k root square [1, 2048]
-        return x[0]
+        x = torch.pow(x, exponent=self.p_k) # element-wise power [batch, 2048, 7, 7]
+        x = torch.mean(x, dim=[2, 3]) # mean 7x7 [batch, 2048]
+        x = torch.pow(x, exponent=1.0/self.p_k) # p_k root square [batch, 2048]
+        return x
 
-# in: [2048]
-# out: [M]
+# in: [batch, 2048]
+# out: [batch, M]
 class AuxModule(nn.Module):
     def __init__(self, M):
         super().__init__()
@@ -64,8 +64,8 @@ class AuxModule(nn.Module):
         x = self.softmax(x)
         return x
 
-# in: [2048]
-# out: [k]
+# in: [batch, 2048]
+# out: [batch, k]
 class RankingModule(nn.Module):
     def __init__(self, k):
         super().__init__()
@@ -82,7 +82,7 @@ class RankingModule(nn.Module):
 # M: aux module output dimension
 # p_k: GD parameter list
 
-# in: [1, 3, 224, 224]
+# in: [batch, 3, 224, 224]
 
 class CGD(nn.Module):
     def __init__(self, k, n, M, p_k_list):
@@ -97,12 +97,11 @@ class CGD(nn.Module):
         self.ResnetBackbone = MyResNet(Bottleneck, [3, 4, 6, 3])
 
     def forward(self, x):
-        concatList = []
-        x = self.ResnetBackbone(x)
-        for i, p_k in enumerate(self.p_k_list):
-            concatList.append(self.RankingLayers[i](GD(x, p_k)))
 
-        z = torch.cat(concatList)
+        x = self.ResnetBackbone(x)
+        concatList = [self.RankingLayers[i](GD(x, p_k)) for i, p_k in enumerate(self.p_k_list)] # list of [p_k, batch, k]
+        z = torch.cat(concatList, dim=1)
+
         return torch.div(z, torch.linalg.norm(z)) # l2 norm
 
     
@@ -115,6 +114,11 @@ def testTensor(t):
 if __name__ == "__main__":
     
     model1 = CGD(1536, 1, 1024, [1, 2, 3])
+    model2 = RankingModule(1536)
+
+
+    testTensor(model1(torch.rand([10, 3, 224, 224])))
+
     #summary(model1, (3, 224, 224), device='cpu')
 
 
