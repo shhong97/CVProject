@@ -34,6 +34,7 @@ def get_all_embeddings(dataset, model, device):
 def test(train_set, test_set, model, device, accuracy_calculator):
     train_embeddings, train_labels = get_all_embeddings(train_set, model, device)
     test_embeddings, test_labels = get_all_embeddings(test_set, model, device)
+    torch.cuda.empty_cache()
     print("Computing accuracy")
     accuracies = accuracy_calculator.get_accuracy(test_embeddings, 
                                                 train_embeddings,
