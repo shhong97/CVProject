@@ -2,8 +2,7 @@ import torch
 import torch.nn as nn
 from torchvision.models.resnet import ResNet, Bottleneck
 from torchvision.models.utils import load_state_dict_from_url
-from pytorch_metric_learning import losses
-from torchsummary import summary
+#from torchsummary import summary
 
 # in: [1, 3, 224, 224]
 # out: [1, 2048, 7, 7]
@@ -113,12 +112,10 @@ def testTensor(t):
 
 
 
-
-
 if __name__ == "__main__":
     
     model1 = CGD(1536, 1, 1024, [1, 2, 3])
-    summary(model1, (3, 224, 224), device='cpu')
+    #summary(model1, (3, 224, 224), device='cpu')
 
 
     #print(model1)
