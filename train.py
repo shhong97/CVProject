@@ -51,7 +51,7 @@ def argumentParsing():
                     'margin': 0.1,
                     'epoch': 3,
                     'batch': 128,
-                    'dim': 1526}
+                    'dim': 1536}
 
     for arg in defaultValue:
         parser.add_argument('-'+arg, required=False)
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
-        transforms.Normalize((0.5), (0.5))
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
 
