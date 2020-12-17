@@ -99,4 +99,6 @@ if __name__ == "__main__":
     num_epochs = int(args['epoch'])
     for epoch in range(1, num_epochs+1):
         train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
-        #test(train_dataset, test_dataset, model, device, accuracy_calculator)
+
+    torch.cuda.empty_cache()
+    test(train_dataset, test_dataset, model, device, accuracy_calculator)
