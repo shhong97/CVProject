@@ -91,8 +91,8 @@ if __name__ == "__main__":
     train_dataset = d.ImageData(dataset.train, transform)
     test_dataset = d.ImageData(dataset.test, transform)
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=256, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=256)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size)
 
 
     model = m.CGD(1536, 1, 1024, [1, 2, 3]).to(device)
