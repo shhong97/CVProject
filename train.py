@@ -48,6 +48,7 @@ def argumentParsing():
     parser.add_argument('-lr', required=False)
     parser.add_argument('-margin', required=False)
     parser.add_argument('-epoch', required=True)
+    parser.add_argument('-batch', required=False)
 
     args = parser.parse_args()
 
@@ -61,14 +62,20 @@ def argumentParsing():
     else:
         margin = 0.1
 
+    if args.batch is not None:
+        batch_size = int(args.batch)
+    else:
+        batch_size = 256
+
+
     epoch = int(args.epoch)
 
-    return lr, margin, epoch
+    return lr, margin, epoch, batch_size
 
 
 if __name__ == "__main__":
 
-    lr, margin, epoch = argumentParsing()
+    lr, margin, num_epochs, batch_size = argumentParsing()
 
     device=torch.device("cuda")
 
@@ -91,7 +98,6 @@ if __name__ == "__main__":
     model = m.CGD(1536, 1, 1024, [1, 2, 3]).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    num_epochs = 5
 
     distance = distances.CosineSimilarity()
     reducer = reducers.ThresholdReducer(low = 0)
