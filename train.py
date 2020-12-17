@@ -13,7 +13,6 @@ TRAIN_TXT = './meta/CUB200/train.txt'
 TEST_TXT = './meta/CUB200/test.txt'
 
 
-
 def train(model, loss_func, mining_func, device, train_loader, optimizer, epoch):
     model.train()
     for batch_idx, (data, labels) in enumerate(train_loader):
@@ -30,13 +29,13 @@ def train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
         if batch_idx % 20 == 0:
             print("Epoch {} Iteration {}: Loss = {}, Number of mined triplets = {}".format(epoch, batch_idx, loss, mining_func.num_triplets))
 
-def get_all_embeddings(dataset, model):
-    tester = testers.BaseTester()
-    return tester.get_all_embeddings(dataset, model)
+def get_all_embeddings(dataset, model, device):
+    tester = testers.BaseTester(data_device=device)
+    return tester.get_all_embeddings(dataset, device, model)
 
-def test(train_set, test_set, model, accuracy_calculator):
-    train_embeddings, train_labels = get_all_embeddings(train_set, model)
-    test_embeddings, test_labels = get_all_embeddings(test_set, model)
+def test(train_set, test_set, model, device, accuracy_calculator):
+    train_embeddings, train_labels = get_all_embeddings(train_set, device, model)
+    test_embeddings, test_labels = get_all_embeddings(test_set, device, model)
     print("Computing accuracy")
     accuracies = accuracy_calculator.get_accuracy(test_embeddings, 
                                                 train_embeddings,
@@ -68,7 +67,7 @@ if __name__ == "__main__":
     model = m.CGD(1536, 1, 1024, [1, 2, 3]).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=0.001)
-    num_epochs = 1
+    num_epochs = 5
 
     distance = distances.CosineSimilarity()
     reducer = reducers.ThresholdReducer(low = 0)
@@ -78,4 +77,4 @@ if __name__ == "__main__":
 
     for epoch in range(1, num_epochs+1):
         train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
-        test(train_dataset, test_dataset, model, accuracy_calculator)
+        #test(train_dataset, test_dataset, model, device, accuracy_calculator)
