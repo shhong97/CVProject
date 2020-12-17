@@ -1,9 +1,9 @@
 import model as m
 import dataset as d
 
+import numpy as np
 import torch
 import torch.optim as optim
-
 from torchvision import transforms
 from pytorch_metric_learning import losses, miners, distances, reducers, testers
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
@@ -17,11 +17,8 @@ def train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
     model.train()
     for batch_idx, (data, labels) in enumerate(train_loader):
         data, labels = data.to(device), labels.to(device)
-        print(data.shape, labels.shape)
         optimizer.zero_grad()
         embeddings = model(data)
-        print(embeddings.shape)
-        print(labels.shape)
         indices_tuple = mining_func(embeddings, labels)
         loss = loss_func(embeddings, labels, indices_tuple)
         loss.backward()
@@ -31,11 +28,11 @@ def train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
 
 def get_all_embeddings(dataset, model, device):
     tester = testers.BaseTester(data_device=device)
-    return tester.get_all_embeddings(dataset, device, model)
+    return tester.get_all_embeddings(dataset, model)
 
 def test(train_set, test_set, model, device, accuracy_calculator):
-    train_embeddings, train_labels = get_all_embeddings(train_set, device, model)
-    test_embeddings, test_labels = get_all_embeddings(test_set, device, model)
+    train_embeddings, train_labels = get_all_embeddings(train_set, model, device)
+    test_embeddings, test_labels = get_all_embeddings(test_set, model, device)
     print("Computing accuracy")
     accuracies = accuracy_calculator.get_accuracy(test_embeddings, 
                                                 train_embeddings,
@@ -54,15 +51,18 @@ if __name__ == "__main__":
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        transforms.Normalize((0.5), (0.5))
     ])
 
-    train_dataset = d.ImageData(dataset.train[:128], transform)
-    test_dataset = d.ImageData(dataset.test[:128], transform)
+
+    train_dataset = d.ImageData(dataset.train, transform)
+    test_dataset = d.ImageData(dataset.test, transform)
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=128)
 
+    for x in train_loader:
+        print (x[0].shape)
 
     model = m.CGD(1536, 1, 1024, [1, 2, 3]).to(device)
 

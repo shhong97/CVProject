@@ -124,15 +124,17 @@ class Dataset(object):
         print("+------------------------------+")
 
 
-# def test_dataset():
-#     dataset = Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT)
-#     dataset.print_stats()
+def test_dataset():
+    dataset = Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT)
+    dataset.print_stats()
 
-#     test_transform = transforms.Compose([
-#         transforms.Resize((224, 224)),
-#         transforms.ToTensor(),
-#         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-#     ])
+    test_transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
 
-#     img_dataset = ImageData(dataset.test, test_transform)
-#     print(img_dataset[0])
+    img_dataset = ImageData(dataset.test, test_transform)
+    for x in img_dataset:
+        print(x[0].shape)
+
