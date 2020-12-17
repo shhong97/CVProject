@@ -100,5 +100,4 @@ if __name__ == "__main__":
     for epoch in range(1, num_epochs+1):
         train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
 
-    torch.cuda.empty_cache()
     test(train_dataset, test_dataset, model, device, accuracy_calculator)
