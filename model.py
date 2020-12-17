@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torchvision.models.resnet import ResNet, Bottleneck
 from torchvision.models.utils import load_state_dict_from_url
+from pytorch_metric_learning import losses
 from torchsummary import summary
 
 # in: [1, 3, 224, 224]
@@ -73,37 +74,37 @@ class RankingModule(nn.Module):
 
     def forward(self, x):
         x = self.FC(x)
-        return torch.div(x, torch.linalg.norm(x))
+        return torch.div(x, torch.linalg.norm(x)) # l2 norm
         
 
 
 # k: ranking module output dimension
 # n: # of GD
 # M: aux module output dimension
-# p_k: GD parameter
+# p_k: GD parameter list
 
 # in: [1, 3, 224, 224]
 
 class CGD(nn.Module):
-    def __init__(self, k, n, M, p_k):
+    def __init__(self, k, n, M, p_k_list):
         super().__init__()
         self.k = k
         self.n = n
         self.M = M
-        self.p_k = p_k
+        self.p_k_list = p_k_list
 
-        self.RankingLayers = nn.ModuleList([RankingModule(k) for _ in range(self.n)])
-        self.AuxLayer = AuxModule(M)
+        self.RankingLayers = nn.ModuleList([RankingModule(k) for _ in self.p_k_list])
+        #self.AuxLayer = AuxModule(M)
         self.ResnetBackbone = MyResNet(Bottleneck, [3, 4, 6, 3])
 
     def forward(self, x):
         concatList = []
         x = self.ResnetBackbone(x)
-        for i in range(self.n):
-            concatList.append(self.RankingLayers[i](GD(x, self.p_k)))
+        for i, p_k in enumerate(self.p_k_list):
+            concatList.append(self.RankingLayers[i](GD(x, p_k)))
 
         z = torch.cat(concatList)
-        return torch.div(z, torch.linalg.norm(z))
+        return torch.div(z, torch.linalg.norm(z)) # l2 norm
 
     
 def testTensor(t):
@@ -111,9 +112,12 @@ def testTensor(t):
     print(t.shape)
 
 
+
+
+
 if __name__ == "__main__":
     
-    model1 = CGD(1024, 768, 1024, 1)
+    model1 = CGD(1536, 1, 1024, [1, 2, 3])
     summary(model1, (3, 224, 224), device='cpu')
 
 
