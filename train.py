@@ -8,7 +8,7 @@ import torch
 import torch.optim as optim
 from torchvision import transforms
 from pytorch_metric_learning import losses, miners, distances, reducers, testers
-from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
+#from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
 
 DATA_DIR = './CUB_200_2011'
 TRAIN_TXT = './meta/CUB200/train.txt'
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     distance = distances.CosineSimilarity()
     reducer = reducers.ThresholdReducer(low = 0)
     loss_func = losses.TripletMarginLoss(margin = float(args['margin']), distance = distance, reducer = reducer)
-    mining_func = miners.TripletMarginMiner(margin = float(args['margin']), distance = distance, type_of_triplets = "semihard")
+    mining_func = miners.TripletMarginMiner(margin = float(args['margin']), distance = distance, type_of_triplets = "hard")
     # accuracy_calculator = AccuracyCalculator(include = ("precision_at_1",), k = 1)
 
     num_epochs = int(args['epoch'])
