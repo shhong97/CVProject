@@ -1,6 +1,7 @@
 import model as m
 import dataset as d
 
+import argparse
 import numpy as np
 import torch
 import torch.optim as optim
@@ -42,9 +43,34 @@ def test(train_set, test_set, model, device, accuracy_calculator):
     print("Test set accuracy (Precision@1) = {}".format(accuracies["precision_at_1"]))
 
 
+def argumentParsing():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-lr', required=False)
+    parser.add_argument('-margin', required=False)
+    parser.add_argument('-epoch', required=True)
+
+    args = parser.parse_args()
+
+    if args.lr is not None:
+        lr = float(args.lr)
+    else:
+        lr = 1e-4
+
+    if args.margin is not None:
+        margin = float(args.margin)
+    else:
+        margin = 0.1
+
+    epoch = int(args.epoch)
+
+    return lr, margin, epoch
+
+
 if __name__ == "__main__":
 
-    device=torch.device("cpu")
+    lr, margin, epoch = argumentParsing()
+
+    device=torch.device("cuda")
 
     dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT)
     dataset.print_stats()
@@ -58,21 +84,19 @@ if __name__ == "__main__":
     train_dataset = d.ImageData(dataset.train, transform)
     test_dataset = d.ImageData(dataset.test, transform)
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=128)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=256, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=256)
 
-    for x in train_loader:
-        print (x[0].shape)
 
     model = m.CGD(1536, 1, 1024, [1, 2, 3]).to(device)
 
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
     num_epochs = 5
 
     distance = distances.CosineSimilarity()
     reducer = reducers.ThresholdReducer(low = 0)
-    loss_func = losses.TripletMarginLoss(margin = 0.2, distance = distance, reducer = reducer)
-    mining_func = miners.TripletMarginMiner(margin = 0.2, distance = distance, type_of_triplets = "semihard")
+    loss_func = losses.TripletMarginLoss(margin = margin, distance = distance, reducer = reducer)
+    mining_func = miners.TripletMarginMiner(margin = margin, distance = distance, type_of_triplets = "hard")
     accuracy_calculator = AccuracyCalculator(include = ("precision_at_1",), k = 1)
 
     for epoch in range(1, num_epochs+1):
