@@ -45,37 +45,28 @@ def test(train_set, test_set, model, device, accuracy_calculator):
 
 def argumentParsing():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-lr', required=False)
-    parser.add_argument('-margin', required=False)
-    parser.add_argument('-epoch', required=True)
-    parser.add_argument('-batch', required=False)
+    
+    defaultValue = {'lr': 1e-4,
+                    'margin': 0.1,
+                    'epoch': 3,
+                    'batch': 128,
+                    'dim': 1526}
 
+    for arg in defaultValue:
+        parser.add_argument('-'+arg, required=False)
+        
     args = parser.parse_args()
+    
+    for i in vars(args):
+        if vars(args)[i]:
+            defaultValue[i] = vars(args)[i]
 
-    if args.lr is not None:
-        lr = float(args.lr)
-    else:
-        lr = 1e-4
-
-    if args.margin is not None:
-        margin = float(args.margin)
-    else:
-        margin = 0.1
-
-    if args.batch is not None:
-        batch_size = int(args.batch)
-    else:
-        batch_size = 256
-
-
-    epoch = int(args.epoch)
-
-    return lr, margin, epoch, batch_size
+    return defaultValue
 
 
 if __name__ == "__main__":
 
-    lr, margin, num_epochs, batch_size = argumentParsing()
+    args = argumentParsing()
 
     device=torch.device("cuda")
 
@@ -91,20 +82,21 @@ if __name__ == "__main__":
     train_dataset = d.ImageData(dataset.train, transform)
     test_dataset = d.ImageData(dataset.test, transform)
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=int(args['batch']), shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=int(args['batch']))
 
 
-    model = m.CGD(1536, 1, 1024, [1, 2, 3]).to(device)
+    model = m.CGD(int(args['dim']), 1, 1024, [1, 2, 3]).to(device)
 
-    optimizer = optim.Adam(model.parameters(), lr=lr)
+    optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
     distance = distances.CosineSimilarity()
     reducer = reducers.ThresholdReducer(low = 0)
-    loss_func = losses.TripletMarginLoss(margin = margin, distance = distance, reducer = reducer)
-    mining_func = miners.TripletMarginMiner(margin = margin, distance = distance, type_of_triplets = "hard")
+    loss_func = losses.TripletMarginLoss(margin = float(args['margin']), distance = distance, reducer = reducer)
+    mining_func = miners.TripletMarginMiner(margin = float(args['margin']), distance = distance, type_of_triplets = "hard")
     accuracy_calculator = AccuracyCalculator(include = ("precision_at_1",), k = 1)
 
+    num_epochs = int(args['epoch'])
     for epoch in range(1, num_epochs+1):
         train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
         #test(train_dataset, test_dataset, model, device, accuracy_calculator)
