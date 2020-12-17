@@ -39,7 +39,8 @@ class ImageData(torch.utils.data.Dataset):
 
     def __getitem__(self, item):
         image, image_id, bbox = self.dataset[item]
-        image = Image.open(image)
+        image = Image.open(image).convert('RGB')
+
         # image = tf.to_tensor(image)
 
         if bbox is not None:
@@ -137,4 +138,3 @@ def test_dataset():
     img_dataset = ImageData(dataset.test, test_transform)
     for x in img_dataset:
         print(x[0].shape)
-
