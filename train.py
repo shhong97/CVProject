@@ -1,5 +1,6 @@
 import model as m
 import dataset as d
+from evaluator import Evaluator
 
 import argparse
 import numpy as np
@@ -27,6 +28,7 @@ def train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
         if batch_idx % 20 == 0:
             print("Epoch {} Iteration {}: Loss = {}, Number of mined triplets = {}".format(epoch, batch_idx, loss, mining_func.num_triplets))
 
+'''
 def get_all_embeddings(dataset, model, device):
     tester = testers.BaseTester(data_device=device)
     return tester.get_all_embeddings(dataset, model)
@@ -34,7 +36,6 @@ def get_all_embeddings(dataset, model, device):
 def test(train_set, test_set, model, device, accuracy_calculator):
     train_embeddings, train_labels = get_all_embeddings(train_set, model, device)
     test_embeddings, test_labels = get_all_embeddings(test_set, model, device)
-    torch.cuda.empty_cache()
     print("Computing accuracy")
     accuracies = accuracy_calculator.get_accuracy(test_embeddings, 
                                                 train_embeddings,
@@ -42,7 +43,7 @@ def test(train_set, test_set, model, device, accuracy_calculator):
                                                 np.squeeze(train_labels),
                                                 False)
     print("Test set accuracy (Precision@1) = {}".format(accuracies["precision_at_1"]))
-
+'''
 
 def argumentParsing():
     parser = argparse.ArgumentParser()
@@ -87,18 +88,23 @@ if __name__ == "__main__":
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=int(args['batch']))
 
 
-    model = m.CGD(int(args['dim']), 1, 1024, [1, 3, 9999]).to(device)
+    model = m.CGD(int(args['dim']), 1, 1024, [1, 3, 5]).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
     distance = distances.CosineSimilarity()
     reducer = reducers.ThresholdReducer(low = 0)
     loss_func = losses.TripletMarginLoss(margin = float(args['margin']), distance = distance, reducer = reducer)
-    mining_func = miners.TripletMarginMiner(margin = float(args['margin']), distance = distance, type_of_triplets = "hard")
-    accuracy_calculator = AccuracyCalculator(include = ("precision_at_1",), k = 1)
+    mining_func = miners.TripletMarginMiner(margin = float(args['margin']), distance = distance, type_of_triplets = "semihard")
+    # accuracy_calculator = AccuracyCalculator(include = ("precision_at_1",), k = 1)
 
     num_epochs = int(args['epoch'])
     for epoch in range(1, num_epochs+1):
         train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
 
-    test(train_dataset, test_dataset, model, device, accuracy_calculator)
+    torch.cuda.empty_cache()
+    model.eval()
+    with torch.no_grad():
+        evaluator = Evaluator(model, test_loader, device)
+        recalls = evaluator.evaluate(ranks=[1, 2, 4, 8])
+        print(recalls)
