@@ -32,9 +32,13 @@ class MyResNet(ResNet):
 # in: [batch, 2048, 7, 7]
 # out: [batch, 2048]
 def GD(x, p_k):
+    '''
     x = torch.pow(x, exponent=p_k) # element-wise power [batch, 2048, 7, 7]
     x = torch.mean(x, dim=[2, 3]) # mean 7x7 [batch, 2048]
     x = torch.pow(x, exponent=1.0/p_k) # p_k root square [batch, 2048]
+    '''
+    x = x.view([-1, 2048, 49])
+    x = torch.linalg.norm(x, ord=p_k, dim=2)
     return x
 
 class GlobalDescriptor(nn.Module):
@@ -113,7 +117,7 @@ def testTensor(t):
 
 if __name__ == "__main__":
     
-    model1 = CGD(1536, 1, 1024, [1, 2, 3])
+    model1 = CGD(1536, 1, 1024, [1, 3, float('inf')])
     model2 = RankingModule(1536)
 
 

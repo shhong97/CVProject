@@ -88,7 +88,7 @@ if __name__ == "__main__":
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=int(args['batch']))
 
 
-    model = m.CGD(int(args['dim']), 1, 1024, [1, 3, 5]).to(device)
+    model = m.CGD(int(args['dim']), 1, 1024, [1, 3, float('inf')]).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
