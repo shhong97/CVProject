@@ -50,19 +50,16 @@ class GlobalDescriptor(nn.Module):
 # out: [batch, M]
 # M: # of classes
 
+# T: temperature
 class AuxModule(nn.Module):
-    def __init__(self, M):
+    def __init__(self, M, T):
         super().__init__()
         self.M = M
-        self.BN = nn.BatchNorm1d(2048)
-        self.FC = nn.Linear(2048, M)
-        self.softmax = nn.Softmax()
+        self.T = T
+        self.FC = nn.Linear(2048, M, bias=True)
 
     def forward(self, x):
-        x = self.BN(x)
-        x = self.FC(x)
-        x = self.softmax(x)
-        return x
+        return torch.div(self.FC(x), self.T)
 
 # in: [batch, 2048]
 # out: [batch, k]
@@ -79,21 +76,23 @@ class RankingModule(nn.Module):
 
 # k: ranking module output dimension
 # n: # of GD
-# M: aux module output dimension
+# M: # of class
+# T: temperature
 # p_k: GD parameter list
 
 # in: [batch, 3, 224, 224]
 
 class CGD(nn.Module):
-    def __init__(self, k, n, M, p_k_list):
+    def __init__(self, k, n, M, T, p_k_list):
         super().__init__()
         self.k = k
         self.n = n
         self.M = M
+        self.T = T
         self.p_k_list = p_k_list
 
         self.RankingLayers = nn.ModuleList([RankingModule(k) for _ in self.p_k_list])
-        #self.AuxLayer = AuxModule(M)
+        self.AuxLayer = AuxModule(M, T)
         self.ResnetBackbone = MyResNet(Bottleneck, [3, 4, 6, 3])
 
     def forward(self, x):
@@ -102,7 +101,7 @@ class CGD(nn.Module):
         concatList = [self.RankingLayers[i](GD(x, p_k)) for i, p_k in enumerate(self.p_k_list)] # list of [p_k, batch, k]
         z = torch.cat(concatList, dim=1)
 
-        return torch.div(z, torch.linalg.norm(z)) # l2 norm
+        return self.AuxLayer(GD(x, self.p_k_list[0])), torch.div(z, torch.linalg.norm(z)) # l2 norm
 
     
 def testTensor(t):
@@ -113,7 +112,7 @@ def testTensor(t):
 
 if __name__ == "__main__":
     
-    model1 = CGD(1536, 1, 1024, [1, 3, float('inf')])
+    model1 = CGD(1536, 1, 1024, 0.5, [1, 3, float('inf')])
     model2 = RankingModule(1536)
 
 
