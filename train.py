@@ -15,6 +15,9 @@ TRAIN_TXT = './meta/CUB200/train.txt'
 TEST_TXT = './meta/CUB200/test.txt'
 BBOX_TXT = './meta/CUB200/bbox.txt'
 
+CARS_DIR = './CARS_196'
+CARS_TRAIN_MAT = './CARS_196/devkit/cars_train_annos.mat'
+CARS_TEST_MAT = './CARS_196/devkit/cars_test_annos.mat'
 
 
 
@@ -71,6 +74,7 @@ if __name__ == "__main__":
 
     device=torch.device("cuda")
 
+    # dataset = d.CARS_Dataset(CARS_DIR, CARS_TRAIN_MAT, CARS_TEST_MAT)
     dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT, bbox_txt=BBOX_TXT)
     dataset.print_stats()
     transform = transforms.Compose([

@@ -161,7 +161,8 @@ class CARS_Dataset():
             bbox_y1 = d[1][0][0]
             bbox_x2 = d[2][0][0]
             bbox_y2 = d[3][0][0]
-            im_path = d[4][0]
+            im_class = d[4][0][0]
+            im_path = d[5][0]
 
             x = min(bbox_x1, bbox_x2)
             y = min(bbox_y1, bbox_y2)
@@ -173,7 +174,7 @@ class CARS_Dataset():
             # image_label = str(image_id) + '_train'
             bbox = self._bbox_train[int(image_id)]
             datasets.append(
-                (os.path.join(self.dataset_dir, 'cars_train/' + str(im_path)), image_id, bbox))
+                (os.path.join(self.dataset_dir, 'cars_train/' + im_path), image_id, bbox))
 
         return datasets, num_class_ids
 
