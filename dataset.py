@@ -44,15 +44,14 @@ class ImageData(torch.utils.data.Dataset):
         image = Image.open(image).convert('RGB')
 
         # image = tf.to_tensor(image)
+        if bbox is not None:
+            x, y, w, h = bbox
+            width, height = image.size
+            crop_box = (x, y, min(x+w, width), min(y+h, height))
+            image = image.crop(crop_box)
 
         if self.transform is not None:
             image = self.transform(image)
-
-        if bbox is not None:
-            x, y, w, h = bbox
-            _, width, height = image.size()
-            image = image[y:min(y+h, height),
-                          x:min(x+w, width)]
 
         return image, image_id
 
@@ -258,4 +257,4 @@ def test_cars_dataset():
         print(x[0].shape)
 
 
-# test_dataset()
+test_dataset()
