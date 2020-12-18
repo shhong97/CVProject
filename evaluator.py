@@ -51,7 +51,7 @@ class Evaluator(object):
         for i, inputs in tqdm(enumerate(self.data_loader), total=len(self.data_loader)):
             images, class_ids = inputs
             features = self.model(images.to(self.device))
-            test_features.append(features.cpu().numpy())
+            test_features.append(features[1].cpu().numpy())
             test_class_ids.extend(class_ids.cpu().numpy())
         test_features = np.concatenate(test_features)
         test_class_ids = np.asarray(test_class_ids)

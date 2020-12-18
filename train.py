@@ -13,37 +13,30 @@ from pytorch_metric_learning import losses, miners, distances, reducers, testers
 DATA_DIR = './CUB_200_2011'
 TRAIN_TXT = './meta/CUB200/train.txt'
 TEST_TXT = './meta/CUB200/test.txt'
+BBOX_TXT = './meta/CUB200/bbox.txt'
 
 
-def train(model, loss_func, mining_func, device, train_loader, optimizer, epoch):
+
+
+def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimizer, epoch):
     model.train()
     for batch_idx, (data, labels) in enumerate(train_loader):
         data, labels = data.to(device), labels.to(device)
         optimizer.zero_grad()
-        embeddings = model(data)
+        aux, embeddings = model(data)
         indices_tuple = mining_func(embeddings, labels)
-        loss = loss_func(embeddings, labels, indices_tuple)
+
+        loss1 = aux_loss(aux, labels) # CE loss
+        loss2 = loss_func(embeddings, labels, indices_tuple) # triplet margin loss
+        
+        loss = loss1 + loss2
+
         loss.backward()
         optimizer.step()
         if batch_idx % 20 == 0:
             print("Epoch {} Iteration {}: Loss = {}, Number of mined triplets = {}".format(epoch, batch_idx, loss, mining_func.num_triplets))
 
-'''
-def get_all_embeddings(dataset, model, device):
-    tester = testers.BaseTester(data_device=device)
-    return tester.get_all_embeddings(dataset, model)
 
-def test(train_set, test_set, model, device, accuracy_calculator):
-    train_embeddings, train_labels = get_all_embeddings(train_set, model, device)
-    test_embeddings, test_labels = get_all_embeddings(test_set, model, device)
-    print("Computing accuracy")
-    accuracies = accuracy_calculator.get_accuracy(test_embeddings, 
-                                                train_embeddings,
-                                                np.squeeze(test_labels),
-                                                np.squeeze(train_labels),
-                                                False)
-    print("Test set accuracy (Precision@1) = {}".format(accuracies["precision_at_1"]))
-'''
 
 def argumentParsing():
     parser = argparse.ArgumentParser()
@@ -52,7 +45,10 @@ def argumentParsing():
                     'margin': 0.1,
                     'epoch': 3,
                     'batch': 128,
-                    'dim': 1536}
+                    'M' : 100,
+                    'T' : 0.5,
+                    'dim': 1536,
+                    'gd': '1,3,inf'}
 
     for arg in defaultValue:
         parser.add_argument('-'+arg, required=False)
@@ -70,9 +66,12 @@ if __name__ == "__main__":
 
     args = argumentParsing()
 
+    print("Arguments:")
+    print(args)
+
     device=torch.device("cuda")
 
-    dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT)
+    dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT, bbox_txt=None)
     dataset.print_stats()
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -87,20 +86,21 @@ if __name__ == "__main__":
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=int(args['batch']), shuffle=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=int(args['batch']))
 
+    p_k_list = [float(x) for x in args['gd'].split(',')]
 
-    model = m.CGD(int(args['dim']), 1, 1024, [1, 3, float('inf')]).to(device)
+    model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
     distance = distances.CosineSimilarity()
     reducer = reducers.ThresholdReducer(low = 0)
+    aux_loss = torch.nn.CrossEntropyLoss()
     loss_func = losses.TripletMarginLoss(margin = float(args['margin']), distance = distance, reducer = reducer)
     mining_func = miners.TripletMarginMiner(margin = float(args['margin']), distance = distance, type_of_triplets = "hard")
-    # accuracy_calculator = AccuracyCalculator(include = ("precision_at_1",), k = 1)
 
     num_epochs = int(args['epoch'])
     for epoch in range(1, num_epochs+1):
-        train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
+        train(model, loss_func, aux_loss, mining_func, device, train_loader, optimizer, epoch)
 
     torch.cuda.empty_cache()
     model.eval()
