@@ -13,9 +13,10 @@ from pytorch_metric_learning import losses, miners, distances, reducers, testers
 DATA_DIR = './CUB_200_2011'
 TRAIN_TXT = './meta/CUB200/train.txt'
 TEST_TXT = './meta/CUB200/test.txt'
+BBOX_TXT = './meta/CUB200/bbox.txt'
 
 
-def train(model, loss_func, mining_func, device, train_loader, optimizer, epoch):
+def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimizer, epoch):
     model.train()
     for batch_idx, (data, labels) in enumerate(train_loader):
         data, labels = data.to(device), labels.to(device)
@@ -28,22 +29,9 @@ def train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
         if batch_idx % 20 == 0:
             print("Epoch {} Iteration {}: Loss = {}, Number of mined triplets = {}".format(epoch, batch_idx, loss, mining_func.num_triplets))
 
-'''
-def get_all_embeddings(dataset, model, device):
-    tester = testers.BaseTester(data_device=device)
-    return tester.get_all_embeddings(dataset, model)
+def aux_loss(embeddings, labels):
+    pass
 
-def test(train_set, test_set, model, device, accuracy_calculator):
-    train_embeddings, train_labels = get_all_embeddings(train_set, model, device)
-    test_embeddings, test_labels = get_all_embeddings(test_set, model, device)
-    print("Computing accuracy")
-    accuracies = accuracy_calculator.get_accuracy(test_embeddings, 
-                                                train_embeddings,
-                                                np.squeeze(test_labels),
-                                                np.squeeze(train_labels),
-                                                False)
-    print("Test set accuracy (Precision@1) = {}".format(accuracies["precision_at_1"]))
-'''
 
 def argumentParsing():
     parser = argparse.ArgumentParser()
@@ -76,7 +64,7 @@ if __name__ == "__main__":
 
     device=torch.device("cuda")
 
-    dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT)
+    dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT, bbox_txt=BBOX_TXT)
     dataset.print_stats()
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -105,7 +93,7 @@ if __name__ == "__main__":
 
     num_epochs = int(args['epoch'])
     for epoch in range(1, num_epochs+1):
-        train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
+        train(model, loss_func, None, mining_func, device, train_loader, optimizer, epoch)
 
     torch.cuda.empty_cache()
     model.eval()

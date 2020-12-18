@@ -32,11 +32,6 @@ class MyResNet(ResNet):
 # in: [batch, 2048, 7, 7]
 # out: [batch, 2048]
 def GD(x, p_k):
-    '''
-    x = torch.pow(x, exponent=p_k) # element-wise power [batch, 2048, 7, 7]
-    x = torch.mean(x, dim=[2, 3]) # mean 7x7 [batch, 2048]
-    x = torch.pow(x, exponent=1.0/p_k) # p_k root square [batch, 2048]
-    '''
     x = x.view([-1, 2048, 49])
     x = torch.linalg.norm(x, ord=p_k, dim=2)
     return x
@@ -44,16 +39,17 @@ def GD(x, p_k):
 class GlobalDescriptor(nn.Module):
     def __init__(self, p_k):
         super().__init__()
-        self.p_k = p_k
+        self.p_k = nn.Parameter(torch.FloatTensor(p_k))
 
     def forward(self, x):
-        x = torch.pow(x, exponent=self.p_k) # element-wise power [batch, 2048, 7, 7]
-        x = torch.mean(x, dim=[2, 3]) # mean 7x7 [batch, 2048]
-        x = torch.pow(x, exponent=1.0/self.p_k) # p_k root square [batch, 2048]
+        x = x.view([-1, 2048, 49])
+        x = torch.linalg.norm(x, ord=self.p_k, dim=2)
         return x
 
 # in: [batch, 2048]
 # out: [batch, M]
+# M: # of classes
+
 class AuxModule(nn.Module):
     def __init__(self, M):
         super().__init__()

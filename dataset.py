@@ -30,7 +30,7 @@ import os
 DATA_DIR = './CUB_200_2011'
 TRAIN_TXT = './meta/CUB200/train.txt'
 TEST_TXT = './meta/CUB200/test.txt'
-
+BBOX_TXT = './meta/CUB200/bbox.txt'
 
 class ImageData(torch.utils.data.Dataset):
     def __init__(self, dataset, transform):
