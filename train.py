@@ -71,6 +71,9 @@ if __name__ == "__main__":
 
     args = argumentParsing()
 
+    print("Arguments:")
+    priint(args)
+
     device=torch.device("cuda")
 
     dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT)
