@@ -257,4 +257,4 @@ def test_cars_dataset():
         print(x[0].shape)
 
 
-test_dataset()
+# test_dataset()
