@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     device=torch.device("cuda")
 
-    dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT, bbox_txt=None)
+    dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT, bbox_txt=BBOX_TXT)
     dataset.print_stats()
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
