@@ -52,7 +52,8 @@ def argumentParsing():
                     'margin': 0.1,
                     'epoch': 3,
                     'batch': 128,
-                    'dim': 1536}
+                    'dim': 1536,
+                    'gd': '1,3,inf'}
 
     for arg in defaultValue:
         parser.add_argument('-'+arg, required=False)
@@ -87,8 +88,9 @@ if __name__ == "__main__":
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=int(args['batch']), shuffle=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=int(args['batch']))
 
+    p_k_list = [float(x) for x in args['gd'].split(',')]
 
-    model = m.CGD(int(args['dim']), 1, 1024, [1, 3, float('inf')]).to(device)
+    model = m.CGD(int(args['dim']), 1, args['batch'], p_k_list).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
