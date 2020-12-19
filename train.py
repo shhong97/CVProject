@@ -51,6 +51,7 @@ def argumentParsing():
                     'M' : 100,
                     'T' : 0.5,
                     'dim': 1536,
+                    'd': '0',
                     'gd': '1,3,inf'}
 
     for arg in defaultValue:
@@ -74,16 +75,20 @@ if __name__ == "__main__":
 
     device=torch.device("cuda")
 
-    # dataset = d.CARS_Dataset(CARS_DIR, CARS_TRAIN_MAT, CARS_TEST_MAT)
-    dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT, bbox_txt=BBOX_TXT)
-    dataset.print_stats()
+    if args['d'] == '0':
+        dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT, bbox_txt=BBOX_TXT)
+        dataset.print_stats()
+    else:
+        dataset = d.CARS_Dataset(CARS_DIR, CARS_TRAIN_MAT, CARS_TEST_MAT)
+        dataset.print_stats()       
+
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
-
+    
     train_dataset = d.ImageData(dataset.train, transform)
     test_dataset = d.ImageData(dataset.test, transform)
 
