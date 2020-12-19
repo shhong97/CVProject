@@ -6,6 +6,9 @@ import argparse
 import numpy as np
 import torch
 import torch.optim as optim
+import torch.nn as nn
+
+from torch.autograd import Variable
 from torchvision import transforms
 from pytorch_metric_learning import losses, miners, distances, reducers, testers
 #from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
@@ -17,6 +20,9 @@ BBOX_TXT = './meta/CUB200/bbox.txt'
 
 CARS_DIR = './CARS_196'
 CARS_MAT = './CARS_196/devkit/cars_annos.mat'
+
+
+LCGD = False
 
 
 def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimizer, epoch):
@@ -32,8 +38,22 @@ def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimiz
         loss2 = loss_func(embeddings, labels, indices_tuple)
 
         loss = loss1 + loss2
-
         loss.backward()
+
+<<<<<<< Updated upstream
+        #custom derivative for p_k
+
+        '''
+        if LCGD:
+            for i in model.GDLayers:
+                for p in i.parameters():
+                    print (torch.min(p).item(), torch.max(p).item())
+        '''
+                
+
+        
+=======
+>>>>>>> Stashed changes
         optimizer.step()
         if batch_idx % 20 == 0:
             print("Epoch {} Iteration {}: AuxLoss = {}, RankingLoss = {}, Number of mined triplets = {}".format(
@@ -51,7 +71,9 @@ def argumentParsing():
                     'T': 0.5,
                     'dim': 1536,
                     'd': '0',
+                    'lcgd': '0', # 0 = cgd, else = initial p_k value of lcgd
                     'gd': '1,3,inf'}
+                    
 
     for arg in defaultValue:
         parser.add_argument('-'+arg, required=False)
@@ -73,6 +95,8 @@ if __name__ == "__main__":
     print(args)
 
     device = torch.device("cuda")
+
+    #torch.autograd.set_detect_anomaly(True)
 
     if args['d'] == '0':
         dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT, bbox_txt=BBOX_TXT)
@@ -97,10 +121,23 @@ if __name__ == "__main__":
     test_loader = torch.utils.data.DataLoader(
         test_dataset, batch_size=int(args['batch']))
 
-    p_k_list = [float(x) for x in args['gd'].split(',')]
+    for i in train_loader:
+        print (i)
 
-    model = m.CGD(int(args['dim']), 1, class_num,
-                  float(args['T']),  p_k_list).to(device)
+
+    p_k_list = [float(x) for x in args['gd'].split(',')]
+    
+
+<<<<<<< Updated upstream
+
+    #model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
+
+    model = m.LCGD(int(args['dim']), 1, int(args['M']), float(args['T']), 2.0).to(device)
+=======
+    if args['lcgd'] == '0':
+        model = m.CGD(int(args['dim']), 1, class_num,
+                    float(args['T']),  p_k_list).to(device)
+>>>>>>> Stashed changes
 
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
