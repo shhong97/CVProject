@@ -84,9 +84,12 @@ class AuxModule(nn.Module):
         super().__init__()
         self.M = M
         self.T = T
+        self.BN = nn.BatchNorm1d(2048)
         self.FC = nn.Linear(2048, M, bias=True)
 
+
     def forward(self, x):
+        x = self.BN(x)
         return torch.div(self.FC(x), self.T)
 
 # in: [batch, 2048]
