@@ -179,13 +179,13 @@ class CARS_Dataset():
 
             if im_is_test:
                 test_datasets.append(
-                    (os.path.join(self.dataset_dir, image_folder + im_path[7:]), im_class, bbox))
+                    (os.path.join(self.dataset_dir, image_folder + im_path[7:]), int(im_class), bbox))
                 if prev_test_label != im_class:
                     num_test_class_ids += 1
                     prev_test_label = im_class
             else:
                 train_datasets.append(
-                    (os.path.join(self.dataset_dir, image_folder + im_path[7:]), im_class, bbox))
+                    (os.path.join(self.dataset_dir, image_folder + im_path[7:]), int(im_class), bbox))
                 if prev_train_label != im_class:
                     num_train_class_ids += 1
                     prev_train_label = im_class
@@ -241,7 +241,3 @@ def test_cars_dataset():
     for x in img_dataset:
 
         print(x[0].shape)
-
-
-# test_dataset()
-test_cars_dataset()
