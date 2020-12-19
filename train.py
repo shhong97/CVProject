@@ -36,8 +36,8 @@ def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimiz
         loss.backward()
         optimizer.step()
         if batch_idx % 20 == 0:
-            print("Epoch {} Iteration {}: Loss = {}, Number of mined triplets = {}".format(
-                epoch, batch_idx, loss, mining_func.num_triplets))
+            print("Epoch {} Iteration {}: AuxLoss = {}, RankingLoss = {}, Number of mined triplets = {}".format(
+                epoch, batch_idx, loss1, loss2, mining_func.num_triplets))
 
 
 def argumentParsing():
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
-    distance = distances.CosineSimilarity()
+    distance = distances.LpDistance(power=2)
     reducer = reducers.ThresholdReducer(low=0)
     aux_loss = torch.nn.CrossEntropyLoss()
     loss_func = losses.TripletMarginLoss(margin=float(
