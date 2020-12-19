@@ -123,10 +123,6 @@ if __name__ == "__main__":
 
     p_k_list = [float(x) for x in args['gd'].split(',')]
     
-<<<<<<< Updated upstream
-
-<<<<<<< Updated upstream
-
     #model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
 
     
