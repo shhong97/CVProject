@@ -117,9 +117,6 @@ if __name__ == "__main__":
     test_loader = torch.utils.data.DataLoader(
         test_dataset, batch_size=int(args['batch']))
 
-    for i in train_loader:
-        print (i)
-
 
     p_k_list = [float(x) for x in args['gd'].split(',')]
     
