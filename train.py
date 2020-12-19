@@ -47,10 +47,11 @@ def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimiz
         loss.backward()
 
         #custom derivative for p_k
+        '''
         for i in model.GDLayers:
             for p in i.parameters():
                 print (torch.min(p).item(), torch.max(p).item())
-
+        '''
                 
 
         
@@ -121,6 +122,7 @@ if __name__ == "__main__":
     model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
 
     #model = m.LCGD(int(args['dim']), 1, int(args['M']), float(args['T']), 3.0).to(device)
+
     convert_relu_to_leakyRelu(model)
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
