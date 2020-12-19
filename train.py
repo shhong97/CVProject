@@ -64,6 +64,7 @@ def argumentParsing():
                     'epoch': 3,
                     'batch': 128,
                     'M': 100,
+                    'n': 1,
                     'T': 0.5,
                     'dim': 1536,
                     'd': '0',
@@ -92,7 +93,7 @@ if __name__ == "__main__":
     print(args)
 
     device = torch.device("cuda")
-    
+
     if args['debug'] == '1':
         torch.autograd.set_detect_anomaly(True)
 
@@ -132,7 +133,7 @@ if __name__ == "__main__":
                     float(args['T']),  p_k_list).to(device)
     else:
         LCGD = True
-        model = m.LCGD(int(args['dim']), 1, class_num, float(args['T']), float(args['lcgd'])).to(device)
+        model = m.LCGD(int(args['dim']), int(args['n']), class_num, float(args['T']), float(args['lcgd'])).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
