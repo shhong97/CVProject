@@ -118,9 +118,9 @@ if __name__ == "__main__":
 
     p_k_list = [float(x) for x in args['gd'].split(',')]
 
-    #model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
+    model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
 
-    model = m.LCGD(int(args['dim']), 1, int(args['M']), float(args['T']), 3.0).to(device)
+    #model = m.LCGD(int(args['dim']), 1, int(args['M']), float(args['T']), 3.0).to(device)
     convert_relu_to_leakyRelu(model)
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
