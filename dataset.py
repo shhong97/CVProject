@@ -232,15 +232,15 @@ def test_dataset():
 def test_cars_dataset():
     dataset = CARS_Dataset(CARS_DIR, CARS_MAT)
     dataset.print_stats()
+
     test_transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
-    img_dataset = ImageData(dataset.test, test_transform)
-    for x in img_dataset:
-        print(type(x[1]))
+    img_dataset = ImageData(dataset.test, None)
+    img_dataset[5555][0].show()
 
 
 

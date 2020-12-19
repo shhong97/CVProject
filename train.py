@@ -22,7 +22,7 @@ CARS_MAT = './CARS_196/devkit/cars_annos.mat'
 def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimizer, epoch):
     model.train()
     for batch_idx, (data, labels) in enumerate(train_loader):
-        data, labels = data.to(device), int(labels.to(device))
+        data, labels = data.to(device), labels.to(device)
         optimizer.zero_grad()
         aux, embeddings = model(data)
         indices_tuple = mining_func(embeddings, labels)
