@@ -175,9 +175,6 @@ if __name__ == "__main__":
     model = LCGD(1536, 1, 100, 0.5, 3.0)
     
     
-
-
-
     #testTensor(model1(torch.rand([10, 3, 224, 224])))
 
     #summary(model1, (3, 224, 224), device='cpu')

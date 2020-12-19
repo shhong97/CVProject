@@ -24,14 +24,6 @@ CARS_TEST_MAT = './CARS_196/devkit/cars_test_annos.mat'
 
 
 
-def convert_relu_to_leakyRelu(model):
-    for child_name, child in model.named_children():
-        if isinstance(child, nn.ReLU):
-            setattr(model, child_name, nn.Sigmoid())
-        else:
-            convert_relu_to_leakyRelu(child)
-
-
 def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimizer, epoch):
     model.train()
     for batch_idx, (data, labels) in enumerate(train_loader):
@@ -107,7 +99,7 @@ if __name__ == "__main__":
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        #transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
     
@@ -119,11 +111,10 @@ if __name__ == "__main__":
 
     p_k_list = [float(x) for x in args['gd'].split(',')]
 
-    model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
+    #model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
 
-    #model = m.LCGD(int(args['dim']), 1, int(args['M']), float(args['T']), 3.0).to(device)
+    model = m.LCGD(int(args['dim']), 1, int(args['M']), float(args['T']), 3.0).to(device)
 
-    convert_relu_to_leakyRelu(model)
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
     distance = distances.CosineSimilarity()
