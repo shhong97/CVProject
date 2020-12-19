@@ -39,11 +39,14 @@ def GD(x, p_k):
 class GlobalDescriptor(nn.Module):
     def __init__(self, p_k):
         super().__init__()
-        self.p_k = nn.Parameter(torch.FloatTensor(p_k))
+        self.p_k = nn.Parameter(torch.FloatTensor([p_k]))
 
     def forward(self, x):
-        x = x.view([-1, 2048, 49])
-        x = torch.linalg.norm(x, ord=self.p_k, dim=2)
+
+        # x = torch.linalg.norm(x, ord=self.p_k.item(), dim=2) # grad not working
+        x = torch.pow(x, exponent=self.p_k) # element-wise power [1, 2048, 7, 7]
+        x = torch.mean(x, dim=[2, 3]) # mean 7x7 [1, 2048]
+        x = torch.pow(x, exponent=1.0/self.p_k) # p_k root square [1, 2048]       
         return x
 
 # in: [batch, 2048]
@@ -103,7 +106,37 @@ class CGD(nn.Module):
 
         return self.AuxLayer(GD(x, self.p_k_list[0])), torch.div(z, torch.linalg.norm(z)) # l2 norm
 
-    
+
+#learnable CGD
+
+# k: ranking module output dimension
+# n: # of GD
+# M: # of class
+# T: temperature
+# p_k: initial p_k value
+
+class LCGD(nn.Module):
+    def __init__(self, k, n, M, T, p_k):
+        super().__init__()
+        self.k = k
+        self.n = n
+        self.M = M
+        self.T = T
+        self.p_k = p_k
+
+        self.GDLayers = nn.ModuleList([GlobalDescriptor(p_k) for _ in range(n)])
+        self.RankingLayers = nn.ModuleList([RankingModule(k) for _ in range(n)])
+        self.AuxLayer = AuxModule(M, T)
+        self.ResnetBackbone = MyResNet(Bottleneck, [3, 4, 6, 3])
+
+    def forward(self, x):
+        x = self.ResnetBackbone(x)
+        
+        concatList = [self.RankingLayers[i](self.GDLayers[i](x)) for i in range(self.n)] # list of [p_k, batch, k]
+        z = torch.cat(concatList, dim=1)
+
+        return self.AuxLayer(self.GDLayers[0](x)), torch.div(z, torch.linalg.norm(z)) # l2 norm
+
 def testTensor(t):
     print(t)
     print(t.shape)

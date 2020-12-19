@@ -35,6 +35,14 @@ def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimiz
         loss = loss1 + loss2
 
         loss.backward()
+
+        for i in model.GDLayers:
+            for name, param in i.named_parameters():
+                print(name, param.grad)
+        '''
+        for name, param in model.named_parameters():
+            print(name, param.grad)
+        '''
         optimizer.step()
         if batch_idx % 20 == 0:
             print("Epoch {} Iteration {}: Loss = {}, Number of mined triplets = {}".format(epoch, batch_idx, loss, mining_func.num_triplets))
@@ -97,8 +105,9 @@ if __name__ == "__main__":
 
     p_k_list = [float(x) for x in args['gd'].split(',')]
 
-    model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
+    #model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
 
+    model = m.LCGD(int(args['dim']), 3, int(args['M']), float(args['T']), 3.0).to(device)
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
     distance = distances.CosineSimilarity()
