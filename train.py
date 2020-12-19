@@ -22,6 +22,7 @@ CARS_DIR = './CARS_196'
 CARS_TRAIN_MAT = './CARS_196/devkit/cars_train_annos.mat'
 CARS_TEST_MAT = './CARS_196/devkit/cars_test_annos.mat'
 
+LCGD = False
 
 
 def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimizer, epoch):
@@ -39,10 +40,12 @@ def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimiz
         loss.backward()
 
         #custom derivative for p_k
+
         '''
-        for i in model.GDLayers:
-            for p in i.parameters():
-                print (torch.min(p).item(), torch.max(p).item())
+        if LCGD:
+            for i in model.GDLayers:
+                for p in i.parameters():
+                    print (torch.min(p).item(), torch.max(p).item())
         '''
                 
 
@@ -99,21 +102,26 @@ if __name__ == "__main__":
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
-        #transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
     
+
     train_dataset = d.ImageData(dataset.train, transform)
     test_dataset = d.ImageData(dataset.test, transform)
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=int(args['batch']), shuffle=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=int(args['batch']))
 
+    for i in train_loader:
+        print (i)
+
+
     p_k_list = [float(x) for x in args['gd'].split(',')]
 
     #model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
 
-    model = m.LCGD(int(args['dim']), 1, int(args['M']), float(args['T']), 3.0).to(device)
+    model = m.LCGD(int(args['dim']), 1, int(args['M']), float(args['T']), 2.0).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
