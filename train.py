@@ -22,10 +22,12 @@ CARS_DIR = './CARS_196'
 CARS_TRAIN_MAT = './CARS_196/devkit/cars_train_annos.mat'
 CARS_TEST_MAT = './CARS_196/devkit/cars_test_annos.mat'
 
+
+
 def convert_relu_to_leakyRelu(model):
     for child_name, child in model.named_children():
         if isinstance(child, nn.ReLU):
-            setattr(model, child_name, nn.LeakyReLU(inplace=True))
+            setattr(model, child_name, nn.Sigmoid())
         else:
             convert_relu_to_leakyRelu(child)
 
