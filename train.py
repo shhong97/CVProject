@@ -48,9 +48,10 @@ def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimiz
 
         #custom derivative for p_k
         for i in model.GDLayers:
-            for name, param in i.named_parameters():
-                # param.grad = Variable(torch.FloatTensor([+0.01])).to(device)
-                print(name, param)
+            for p in i.parameters():
+                print (torch.min(p).item(), torch.max(p).item())
+
+                
 
         
         optimizer.step()

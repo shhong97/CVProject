@@ -53,20 +53,24 @@ class GlobalDescriptor(nn.Module):
         x = x.view([-1, 2048, 49])
         
         #print( any([x == 0 for x in x.view([-1])]))
+        
+        x = torch.pow(x, self.p_k.reshape(2048, 1).expand(2048, 49))
+
+        '''
         y = torch.randn(x.shape).to(x.device)
         for j, batch in enumerate(x):
             for i, d in enumerate(batch):
                 #print(d, self.p_k[i])
                 y[j][i] = torch.pow(d, self.p_k[i])
-
-        y = torch.mean(y, dim=[2]) # mean 7x7 [batch, 2048]       
-        y = torch.pow(y, 1.0/self.p_k)
+        '''
+        x = torch.mean(x, dim=[2]) # mean 7x7 [batch, 2048]       
+        x = torch.pow(x, 1.0/self.p_k)
 
 
         #self.p_k.grad = Variable(torch.FloatTensor([+0.01]))
 
         #print(self.p_k.grad_fn)
-        return y
+        return x
 
 
 
