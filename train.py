@@ -68,6 +68,7 @@ def argumentParsing():
                     'dim': 1536,
                     'd': '0',
                     'lcgd': '0', # 0 = cgd, else = initial p_k value of lcgd
+                    'debug': '0', # 1 for anomaly detection
                     'gd': '1,3,inf'}
                     
 
@@ -91,8 +92,9 @@ if __name__ == "__main__":
     print(args)
 
     device = torch.device("cuda")
-
-    #torch.autograd.set_detect_anomaly(True)
+    
+    if args['debug'] == '1':
+        torch.autograd.set_detect_anomaly(True)
 
     if args['d'] == '0':
         dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT, bbox_txt=BBOX_TXT)
