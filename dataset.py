@@ -128,18 +128,16 @@ class Dataset(object):
 
 
 CARS_DIR = './CARS_196'
-CARS_TRAIN_MAT = './CARS_196/devkit/cars_train_annos.mat'
-CARS_TEST_MAT = './CARS_196/devkit/cars_test_annos.mat'
+CARS_MAT = './CARS_196/devkit/cars_annos.mat'
 
 
 class CARS_Dataset():
-    def __init__(self, dataset_dir, train_mat, test_mat):
+    def __init__(self, dataset_dir, cars_mat):
         self.dataset_dir = dataset_dir
         self._bbox_train = None
         self._bbox_test = None
 
-        train, num_train_ids = self._load_train(train_mat)
-        test, num_test_ids = self._load_test(test_mat)
+        train, num_train_ids, test, num_test_ids = self._load_meta(cars_mat)
 
         self.train = train
         self.test = test
@@ -147,65 +145,49 @@ class CARS_Dataset():
         self.num_train_ids = num_train_ids
         self.num_test_ids = num_test_ids
 
-    # TODO: Refactoring with non duplicated codes
-    def _load_train(self, meta_file):
-        datasets = []
-        num_class_ids = 0
+    def _load_meta(self, meta_file):
+        test_datasets = []
+        train_datasets = []
+        prev_test_label = -1
+        num_test_class_ids = 0
+        prev_train_label = -1
+        num_train_class_ids = 0
 
-        cars_annos_train = io.loadmat(meta_file)
-        self._bbox_train = {}
+        cars_annos = io.loadmat(meta_file)
+        self._bbox = {}
 
-        for d in cars_annos_train['annotations'][0]:
-            num_class_ids += 1
-            bbox_x1 = d[0][0][0]
-            bbox_y1 = d[1][0][0]
-            bbox_x2 = d[2][0][0]
-            bbox_y2 = d[3][0][0]
-            im_class = d[4][0][0]
-            im_path = d[5][0]
-
-            x = min(bbox_x1, bbox_x2)
-            y = min(bbox_y1, bbox_y2)
-            w = max(bbox_x1, bbox_x2) - x
-            h = max(bbox_y1, bbox_y2) - y
-
-            image_id = int(im_path[:5])
-            self._bbox_train[int(image_id)] = [int(x), int(y), int(w), int(h)]
-            # image_label = str(image_id) + '_train'
-            bbox = self._bbox_train[int(image_id)]
-            datasets.append(
-                (os.path.join(self.dataset_dir, 'cars_train/' + im_path), image_id, bbox))
-
-        return datasets, num_class_ids
-
-    def _load_test(self, meta_file):
-        datasets = []
-        num_class_ids = 0
-
-        cars_annos_test = io.loadmat(meta_file)
-        self._bbox_test = {}
-
-        for d in cars_annos_test['annotations'][0]:
-            num_class_ids += 1
-            bbox_x1 = d[0][0][0]
-            bbox_y1 = d[1][0][0]
-            bbox_x2 = d[2][0][0]
-            bbox_y2 = d[3][0][0]
-            im_path = d[4][0]
+        for d in cars_annos['annotations'][0]:
+            im_path = d[0][0]
+            bbox_x1 = d[1][0][0]
+            bbox_y1 = d[2][0][0]
+            bbox_x2 = d[3][0][0]
+            bbox_y2 = d[4][0][0]
+            im_class = d[5][0][0]
+            im_is_test = d[6][0][0]
 
             x = min(bbox_x1, bbox_x2)
             y = min(bbox_y1, bbox_y2)
             w = max(bbox_x1, bbox_x2) - x
             h = max(bbox_y1, bbox_y2) - y
 
-            image_id = int(im_path[:5])
-            self._bbox_test[int(image_id)] = [int(x), int(y), int(w), int(h)]
-            # image_label = str(image_id) + '_test'
-            bbox = self._bbox_test[int(image_id)]
-            datasets.append(
-                (os.path.join(self.dataset_dir, 'cars_test/' + str(im_path)), image_id, bbox))
+            image_id = int(im_path[8:14])
+            self._bbox[image_id] = [int(x), int(y), int(w), int(h)]
+            bbox = self._bbox[image_id]
 
-        return datasets, num_class_ids
+            if im_is_test:
+                test_datasets.append(
+                    (os.path.join(self.dataset_dir, im_path), im_class, bbox))
+                if prev_test_label != im_class:
+                    num_test_class_ids += 1
+                    prev_test_label = im_class
+            else:
+                train_datasets.append(
+                    (os.path.join(self.dataset_dir, im_path), im_class, bbox))
+                if prev_train_label != im_class:
+                    num_train_class_ids += 1
+                    prev_train_label = im_class
+
+        return train_datasets, num_train_class_ids, test_datasets, num_test_class_ids
 
     def print_stats(self):
         num_total_ids = self.num_train_ids + self.num_test_ids
@@ -244,7 +226,7 @@ def test_dataset():
 
 
 def test_cars_dataset():
-    dataset = CARS_Dataset(CARS_DIR, CARS_TRAIN_MAT, CARS_TEST_MAT)
+    dataset = CARS_Dataset(CARS_DIR, CARS_MAT)
     dataset.print_stats()
     test_transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -259,3 +241,4 @@ def test_cars_dataset():
 
 
 # test_dataset()
+# test_cars_dataset()
