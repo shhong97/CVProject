@@ -6,6 +6,8 @@ import argparse
 import numpy as np
 import torch
 import torch.optim as optim
+import torch.nn as nn
+
 from torch.autograd import Variable
 from torchvision import transforms
 from pytorch_metric_learning import losses, miners, distances, reducers, testers
@@ -20,7 +22,12 @@ CARS_DIR = './CARS_196'
 CARS_TRAIN_MAT = './CARS_196/devkit/cars_train_annos.mat'
 CARS_TEST_MAT = './CARS_196/devkit/cars_test_annos.mat'
 
-
+def convert_relu_to_leakyRelu(model):
+    for child_name, child in model.named_children():
+        if isinstance(child, nn.ReLU):
+            setattr(model, child_name, nn.LeakyReLU(inplace=True))
+        else:
+            convert_relu_to_leakyRelu(child)
 
 
 def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimizer, epoch):
@@ -84,6 +91,8 @@ if __name__ == "__main__":
 
     device=torch.device("cuda")
 
+    #torch.autograd.set_detect_anomaly(True)
+
     if args['d'] == '0':
         dataset = d.Dataset(DATA_DIR, TRAIN_TXT, TEST_TXT, bbox_txt=BBOX_TXT)
         dataset.print_stats()
@@ -109,6 +118,7 @@ if __name__ == "__main__":
     #model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
 
     model = m.LCGD(int(args['dim']), 1, int(args['M']), float(args['T']), 3.0).to(device)
+    convert_relu_to_leakyRelu(model)
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
     distance = distances.CosineSimilarity()

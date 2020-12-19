@@ -51,10 +51,14 @@ class GlobalDescriptor(nn.Module):
 
         # x = torch.linalg.norm(x, ord=self.p_k.item(), dim=2) # grad not working
         x = x.view([-1, 2048, 49])
+        
+        #print( any([x == 0 for x in x.view([-1])]))
         y = torch.randn(x.shape).to(x.device)
         for j, batch in enumerate(x):
             for i, d in enumerate(batch):
+                #print(d, self.p_k[i])
                 y[j][i] = torch.pow(d, self.p_k[i])
+
         y = torch.mean(y, dim=[2]) # mean 7x7 [batch, 2048]       
         y = torch.pow(y, 1.0/self.p_k)
 
@@ -148,7 +152,6 @@ class LCGD(nn.Module):
 
     def forward(self, x):
         x = self.ResnetBackbone(x)
-        
         concatList = [self.RankingLayers[i](self.GDLayers[i](x)) for i in range(self.n)] # list of [p_k, batch, k]
         z = torch.cat(concatList, dim=1)
 
@@ -165,8 +168,13 @@ if __name__ == "__main__":
     model1 = CGD(1536, 1, 1024, 0.5, [1, 3, float('inf')])
     model2 = RankingModule(1536)
 
+    model = LCGD(1536, 1, 100, 0.5, 3.0)
+    
+    
 
-    testTensor(model1(torch.rand([10, 3, 224, 224])))
+
+
+    #testTensor(model1(torch.rand([10, 3, 224, 224])))
 
     #summary(model1, (3, 224, 224), device='cpu')
 
