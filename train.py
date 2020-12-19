@@ -40,20 +40,16 @@ def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimiz
         loss = loss1 + loss2
         loss.backward()
 
-<<<<<<< Updated upstream
-        #custom derivative for p_k
 
-        '''
+        #custom derivative for p_k
         if LCGD:
             for i in model.GDLayers:
                 for p in i.parameters():
                     print (torch.min(p).item(), torch.max(p).item())
-        '''
+        
                 
 
-        
-=======
->>>>>>> Stashed changes
+
         optimizer.step()
         if batch_idx % 20 == 0:
             print("Epoch {} Iteration {}: AuxLoss = {}, RankingLoss = {}, Number of mined triplets = {}".format(
@@ -127,17 +123,21 @@ if __name__ == "__main__":
 
     p_k_list = [float(x) for x in args['gd'].split(',')]
     
+<<<<<<< Updated upstream
 
 <<<<<<< Updated upstream
 
     #model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
 
-    model = m.LCGD(int(args['dim']), 1, int(args['M']), float(args['T']), 2.0).to(device)
-=======
+    
+
+
     if args['lcgd'] == '0':
         model = m.CGD(int(args['dim']), 1, class_num,
                     float(args['T']),  p_k_list).to(device)
->>>>>>> Stashed changes
+    else:
+        LCGD = True
+        model = m.LCGD(int(args['dim']), 1, class_num, float(args['T']), float(args['lcgd'])).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
