@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
 from torchvision.models.resnet import ResNet, Bottleneck
 from torchvision.models.utils import load_state_dict_from_url
 #from torchsummary import summary
@@ -39,17 +40,31 @@ def GD(x, p_k):
 class GlobalDescriptor(nn.Module):
     def __init__(self, p_k):
         super().__init__()
-        self.p_k = nn.Parameter(torch.FloatTensor([p_k]))
+        #self.p_k = Variable(torch.FloatTensor([p_k]))
+        self.p_k = nn.Parameter(torch.full([2048], 3.0), requires_grad=True)
+
+    def custom_grad(self, f_k, x):
+        torch.divtorch.square(self.p_k)
+
 
     def forward(self, x):
 
         # x = torch.linalg.norm(x, ord=self.p_k.item(), dim=2) # grad not working
-        
-        x = torch.pow(x, exponent=self.p_k) # element-wise power [batch, 2048, 7, 7]
-        x = torch.mean(x, dim=[2, 3]) # mean 7x7 [batch, 2048]
-        x = torch.sqrt(x)
-        #x = torch.pow(x, exponent=0.99) # p_k root square [batch, 2048]       
-        return x
+        x = x.view([-1, 2048, 49])
+        y = torch.randn(x.shape).to(x.device)
+        for j, batch in enumerate(x):
+            for i, d in enumerate(batch):
+                y[j][i] = torch.pow(d, self.p_k[i])
+        y = torch.mean(y, dim=[2]) # mean 7x7 [batch, 2048]       
+        y = torch.pow(y, 1.0/self.p_k)
+
+
+        #self.p_k.grad = Variable(torch.FloatTensor([+0.01]))
+
+        #print(self.p_k.grad_fn)
+        return y
+
+
 
 # in: [batch, 2048]
 # out: [batch, M]

@@ -6,6 +6,7 @@ import argparse
 import numpy as np
 import torch
 import torch.optim as optim
+from torch.autograd import Variable
 from torchvision import transforms
 from pytorch_metric_learning import losses, miners, distances, reducers, testers
 #from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
@@ -21,6 +22,7 @@ CARS_TEST_MAT = './CARS_196/devkit/cars_test_annos.mat'
 
 
 
+
 def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimizer, epoch):
     model.train()
     for batch_idx, (data, labels) in enumerate(train_loader):
@@ -33,16 +35,15 @@ def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimiz
         loss2 = loss_func(embeddings, labels, indices_tuple) # triplet margin loss
         
         loss = loss1 + loss2
-
         loss.backward()
 
+        #custom derivative for p_k
         for i in model.GDLayers:
             for name, param in i.named_parameters():
-                print(name, param.grad)
-        '''
-        for name, param in model.named_parameters():
-            print(name, param.grad)
-        '''
+                # param.grad = Variable(torch.FloatTensor([+0.01])).to(device)
+                print(name, param)
+
+        
         optimizer.step()
         if batch_idx % 20 == 0:
             print("Epoch {} Iteration {}: Loss = {}, Number of mined triplets = {}".format(epoch, batch_idx, loss, mining_func.num_triplets))
@@ -107,7 +108,7 @@ if __name__ == "__main__":
 
     #model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
 
-    model = m.LCGD(int(args['dim']), 3, int(args['M']), float(args['T']), 3.0).to(device)
+    model = m.LCGD(int(args['dim']), 1, int(args['M']), float(args['T']), 3.0).to(device)
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))
 
     distance = distances.CosineSimilarity()
