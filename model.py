@@ -44,9 +44,11 @@ class GlobalDescriptor(nn.Module):
     def forward(self, x):
 
         # x = torch.linalg.norm(x, ord=self.p_k.item(), dim=2) # grad not working
-        x = torch.pow(x, exponent=self.p_k) # element-wise power [1, 2048, 7, 7]
-        x = torch.mean(x, dim=[2, 3]) # mean 7x7 [1, 2048]
-        x = torch.pow(x, exponent=1.0/self.p_k) # p_k root square [1, 2048]       
+        
+        x = torch.pow(x, exponent=self.p_k) # element-wise power [batch, 2048, 7, 7]
+        x = torch.mean(x, dim=[2, 3]) # mean 7x7 [batch, 2048]
+        x = torch.sqrt(x)
+        #x = torch.pow(x, exponent=0.99) # p_k root square [batch, 2048]       
         return x
 
 # in: [batch, 2048]
