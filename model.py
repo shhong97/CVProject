@@ -156,6 +156,7 @@ class LCGD(nn.Module):
 
     def forward(self, x):
         x = self.ResnetBackbone(x)
+        x = torch.add(x, 1e-6)
         concatList = [self.RankingLayers[i](self.GDLayers[i](x)) for i in range(self.n)] # list of [p_k, batch, k]
         z = torch.cat(concatList, dim=1)
 
