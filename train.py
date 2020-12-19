@@ -22,7 +22,7 @@ CARS_MAT = './CARS_196/devkit/cars_annos.mat'
 def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimizer, epoch):
     model.train()
     for batch_idx, (data, labels) in enumerate(train_loader):
-        data, labels = data.to(device), labels.to(device)
+        data, labels = data.to(device), int(labels.to(device))
         optimizer.zero_grad()
         aux, embeddings = model(data)
         indices_tuple = mining_func(embeddings, labels)
@@ -90,6 +90,8 @@ if __name__ == "__main__":
     train_dataset = d.ImageData(dataset.train, transform)
     test_dataset = d.ImageData(dataset.test, transform)
 
+    class_num = dataset.num_train_ids
+
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=int(args['batch']), shuffle=True)
     test_loader = torch.utils.data.DataLoader(
@@ -97,7 +99,7 @@ if __name__ == "__main__":
 
     p_k_list = [float(x) for x in args['gd'].split(',')]
 
-    model = m.CGD(int(args['dim']), 1, int(args['M']),
+    model = m.CGD(int(args['dim']), 1, class_num,
                   float(args['T']),  p_k_list).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=float(args['lr']))

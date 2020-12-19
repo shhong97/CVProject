@@ -225,7 +225,8 @@ def test_dataset():
 
     img_dataset = ImageData(dataset.test, test_transform)
     for x in img_dataset:
-        print(x[0].shape)
+        print(type(x[1]))
+
 
 
 def test_cars_dataset():
@@ -239,5 +240,9 @@ def test_cars_dataset():
 
     img_dataset = ImageData(dataset.test, test_transform)
     for x in img_dataset:
+        print(type(x[1]))
 
-        print(x[0].shape)
+
+
+#test_dataset()
+#test_cars_dataset()
