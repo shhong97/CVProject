@@ -176,6 +176,7 @@ if __name__ == "__main__":
         
 
     print(recall_list)
+    plt.style.use('classic')
     #torch.cuda.empty_cache()
     if args['eval'] == '1':
         # loss plot
