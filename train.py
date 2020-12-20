@@ -2,6 +2,7 @@ import model as m
 import dataset as d
 from evaluator import Evaluator
 
+import csv
 import argparse
 import numpy as np
 import torch
@@ -95,6 +96,10 @@ def argumentParsing():
 
     return defaultValue
 
+def write_csv(fileName, iterable):
+    with open(fileName+'.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(iterable)
 
 if __name__ == "__main__":
 
@@ -137,8 +142,6 @@ if __name__ == "__main__":
     #model = m.CGD(int(args['dim']), 1, int(args['M']), float(args['T']),  p_k_list).to(device)
 
     
-
-
     if args['lcgd'] == '0':
         model = m.CGD(int(args['dim']), 1, class_num,
                     float(args['T']),  p_k_list).to(device)
@@ -174,11 +177,16 @@ if __name__ == "__main__":
                     recall_list[i].append(k)
 
         
+    torch.no_grad()
 
     print(recall_list)
-    plt.style.use('classic')
+    #plt.style.use('classic')
+
     #torch.cuda.empty_cache()
     if args['eval'] == '1':
+        #write_csv('loss.csv', [x.item() for x in loss_list])
+        #write_csv('recall.csv', recall_list)
+
         # loss plot
         plot1 = plt.figure(1)
         loss_name = ['aux loss', 'ranking loss']
@@ -195,10 +203,11 @@ if __name__ == "__main__":
 
         # p_k plot
         if args['lcgd'] != '0':
+            #write_csv('pk.csv', pmn_list)
             plot3 = plt.figure(3)
             pk_name = ['pk_max', 'pk_min']
             for i in range(len(pk_name)):
-                plt.plot(recall_list[i], label=pk_name[i])
+                plt.plot(pmn_list[i], label=pk_name[i])
             plt.legend()
 
         plt.show()
