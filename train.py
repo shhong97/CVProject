@@ -26,7 +26,7 @@ CARS_MAT = './CARS_196/devkit/cars_annos.mat'
 
 LCGD = False
 loss_list = [[], []]
-recall_list = [[], [], [], []]
+acc_list = [[], [], [], []]
 pmn_list = [[], []]
 
 
@@ -48,13 +48,16 @@ def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimiz
 
         #custom derivative for p_k
         if LCGD:
+            minn = 9999999
+            maxx = -9999999
             for i in model.GDLayers:
                 for p in i.parameters():
-                    maxx = torch.max(p).item()
-                    minn = torch.min(p).item()
-                    print (minn, maxx)
-                    pmn_list[0].append(maxx)
-                    pmn_list[1].append(minn)
+                    maxx = max(torch.max(p).item(), maxx)
+                    minn = min(torch.min(p).item(), minn)
+
+            print(minn, maxx)
+            pmn_list[0].append(maxx)
+            pmn_list[1].append(minn)        
         
                 
 
@@ -174,31 +177,31 @@ if __name__ == "__main__":
                 evaluator = Evaluator(model, test_loader, device)
                 recalls = evaluator.evaluate(ranks=[1, 2, 4, 8])
                 for i, k in enumerate(recalls):
-                    recall_list[i].append(k)
+                    acc_list[i].append(k)
 
         
     torch.no_grad()
 
-    print(recall_list)
+    print(acc_list)
     #plt.style.use('classic')
 
     #torch.cuda.empty_cache()
     if args['eval'] == '1':
         #write_csv('loss.csv', [x.item() for x in loss_list])
-        #write_csv('recall.csv', recall_list)
+        #write_csv('recall.csv', acc_list)
 
         # loss plot
         plot1 = plt.figure(1)
         loss_name = ['aux loss', 'ranking loss']
         for i in range(len(loss_name)):
-            plt.plot(recall_list[i], label=loss_name[i])
+            plt.plot(loss_list[i], label=loss_name[i])
         plt.legend()
     
         # accuracy plot
         plot2 = plt.figure(2)
         acc_name = ['recall@1', 'recall@2', 'recall@4', 'recall@8']
         for i in range(len(acc_name)):
-            plt.plot(recall_list[i], label=acc_name[i])
+            plt.plot(acc_list[i], label=acc_name[i])
         plt.legend()
 
         # p_k plot

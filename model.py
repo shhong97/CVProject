@@ -41,7 +41,7 @@ class GlobalDescriptor(nn.Module):
     def __init__(self, p_k):
         super().__init__()
         #self.p_k = Variable(torch.FloatTensor([p_k]))
-        self.p_k = nn.Parameter(torch.full([2048], 3.0), requires_grad=True)
+        self.p_k = nn.Parameter(torch.full([2048], p_k), requires_grad=True)
 
     def custom_grad(self, f_k, x):
         torch.divtorch.square(self.p_k)
