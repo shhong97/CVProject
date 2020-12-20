@@ -7,6 +7,7 @@ import numpy as np
 import torch
 import torch.optim as optim
 import torch.nn as nn
+import matplotlib.pyplot as plt
 
 from torch.autograd import Variable
 from torchvision import transforms
@@ -23,6 +24,9 @@ CARS_MAT = './CARS_196/devkit/cars_annos.mat'
 
 
 LCGD = False
+loss_list = [[], []]
+recall_list = [[], [], [], []]
+pmn_list = [[], []]
 
 
 def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimizer, epoch):
@@ -45,7 +49,11 @@ def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimiz
         if LCGD:
             for i in model.GDLayers:
                 for p in i.parameters():
-                    print (torch.min(p).item(), torch.max(p).item())
+                    maxx = torch.max(p).item()
+                    minn = torch.min(p).item()
+                    print (minn, maxx)
+                    pmn_list[0].append(maxx)
+                    pmn_list[1].append(minn)
         
                 
 
@@ -54,6 +62,8 @@ def train(model, loss_func, aux_loss, mining_func, device, train_loader, optimiz
         if batch_idx % 20 == 0:
             print("Epoch {} Iteration {}: AuxLoss = {}, RankingLoss = {}, Number of mined triplets = {}".format(
                 epoch, batch_idx, loss1, loss2, mining_func.num_triplets))
+            loss_list[0].append(loss1)
+            loss_list[1].append(loss2)
 
 
 def argumentParsing():
@@ -70,6 +80,7 @@ def argumentParsing():
                     'd': '0',
                     'lcgd': '0', # 0 = cgd, else = initial p_k value of lcgd
                     'debug': '0', # 1 for anomaly detection
+                    'eval': '1',
                     'gd': '1,3,inf'}
                     
 
@@ -145,14 +156,55 @@ if __name__ == "__main__":
     mining_func = miners.TripletMarginMiner(margin=float(
         args['margin']), distance=distance, type_of_triplets="hard")
 
+    
+
     num_epochs = int(args['epoch'])
     for epoch in range(1, num_epochs+1):
         train(model, loss_func, aux_loss, mining_func,
               device, train_loader, optimizer, epoch)
 
-    torch.cuda.empty_cache()
-    model.eval()
-    with torch.no_grad():
-        evaluator = Evaluator(model, test_loader, device)
-        recalls = evaluator.evaluate(ranks=[1, 2, 4, 8])
-        print(recalls)
+        if args['eval'] == '1':
+            #torch.cuda.empty_cache()
+            print('test')
+            model.eval()
+            with torch.no_grad():
+                evaluator = Evaluator(model, test_loader, device)
+                recalls = evaluator.evaluate(ranks=[1, 2, 4, 8])
+                for i, k in enumerate(recalls):
+                    recall_list[i].append(k)
+
+        
+
+    print(recall_list)
+    #torch.cuda.empty_cache()
+    if args['eval'] == '1':
+        # loss plot
+        plot1 = plt.figure(1)
+        loss_name = ['aux loss', 'ranking loss']
+        for i in range(len(loss_name)):
+            plt.plot(recall_list[i], label=loss_name[i])
+        plt.legend()
+    
+        # accuracy plot
+        plot2 = plt.figure(2)
+        acc_name = ['recall@1', 'recall@2', 'recall@4', 'recall@8']
+        for i in range(len(acc_name)):
+            plt.plot(recall_list[i], label=acc_name[i])
+        plt.legend()
+
+        # p_k plot
+        if args['lcgd'] != '0':
+            plot3 = plt.figure(3)
+            pk_name = ['pk_max', 'pk_min']
+            for i in range(len(pk_name)):
+                plt.plot(recall_list[i], label=pk_name[i])
+            plt.legend()
+
+        plt.show()
+
+    else:
+        model.eval()
+        with torch.no_grad():
+            evaluator = Evaluator(model, test_loader, device)
+            recalls = evaluator.evaluate(ranks=[1, 2, 4, 8])
+            print(recalls)
